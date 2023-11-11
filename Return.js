@@ -11,4 +11,5 @@ return {
     postLoading,
     posts,
     getPostTypeAndTaxoName,
+    defaultView,
   }
