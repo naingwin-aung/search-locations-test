@@ -12,4 +12,8 @@ return {
     posts,
     getPostTypeAndTaxoName,
     defaultView,
+    pageChangeLoading,
+    totalPageCount,
+    changeViewHandler,
+    scrollComponent,
   }

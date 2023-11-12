@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref, watch, onUnmounted } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 
 const postParams = reactive({
   'post_type': 'branch',
@@ -35,7 +35,6 @@ const handleScroll = () => {
   let element = scrollComponent.value;
 
   if (element.scrollTop === element.scrollHeight - element.clientHeight) {
-    console.log('Scrolled to the bottom!');
     if(!pageChangeLoading.value) {
       page.value += 1;
       if(page.value <= totalPageCount.value) {
@@ -48,7 +47,6 @@ const handleScroll = () => {
 const getLocations = async () => {
   postLoading.value = true;
   const res = await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/filter-location/?lang=${lang.value}&taxo_name=${postParams.taxo_name}&search_key=`);
-  console.log(res.data.data.length);
   resLocations.value = res.data.data;
   postLoading.value = false;
 }
@@ -102,8 +100,8 @@ const postHandler = async (page, isPageChange = false) => {
     pageChangeLoading.value = true;
   }
   locationSuggests.value = [];
+
   const res = await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${page}`);
-  console.log(res.data.data);
   if(res.data.data) {
     posts.value = [...posts.value, ...res.data.data];
     totalPageCount.value = res.data.pagination.total_page_count;
@@ -178,7 +176,7 @@ const changeViewHandler = (view) => {
           </div>
 
           <div>
-            <button class="btn-search" @click="postHandler(1)">Search</button>
+            <button class="btn-white-secondary" @click="postHandler(1)">Search</button>
           </div>
         </div>
         <!-- end search box -->
@@ -312,9 +310,9 @@ const changeViewHandler = (view) => {
                 </div>
               </h4>
             </div>
-            <div class="post-table-wrapper" ref="scrollComponent">
+            <div class="post-data-table-wrapper" ref="scrollComponent">
               <!-- start list view -->
-              <table class="table table-striped" v-if="defaultView == 'listView'">
+              <table class="table table-striped border-0 post-data-table" v-if="defaultView == 'listView'">
                 <thead>
                   <tr class="py-3">
                     <th scope="col">Location Name</th>
@@ -518,20 +516,6 @@ const changeViewHandler = (view) => {
   margin-left: 6px;
 }
 
-.btn-search {
-  background-color: transparent;
-  color: #313235;
-  border: 1px solid darkgray;
-  border-radius: 100px;
-  padding: 12px 24px;
-  transition: background-color 0.5s ease;
-}
-
-.btn-search:hover {
-  background-color: #313235;
-  color: white;
-}
-
 .post-tabs {
   border: 1px solid darkgray;
   border-bottom: none;
@@ -539,7 +523,7 @@ const changeViewHandler = (view) => {
   border-top-right-radius: 20px;
 }
 
-.post-table-wrapper {
+.post-data-table-wrapper {
   border: 1px solid darkgray;
   border-top: none;
   border-bottom-left-radius: 20px;
@@ -589,5 +573,24 @@ const changeViewHandler = (view) => {
 .view-active {
   color: #681C32;
   border-bottom: 2px solid #681C32;
+}
+
+.post-view-table {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.post-data-table>:not(caption)>*>* {
+  border-bottom-width: 0px !important
+}
+
+.btn-white-secondary {
+    background-color: #ffffff;
+    color: #691C32;
+    border: 1px solid #691C32;
+    border-radius: 100px;
+    padding: 12px 24px;
+    transition: background-color 0.5s ease;
+    font-weight: 600;
 }
 </style>
