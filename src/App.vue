@@ -15,34 +15,28 @@ const keyword = ref('');
 const locationSuggests = ref([]);
 const posts = ref([]);
 const defaultView = ref('listView');
-const page = ref(1);
+const page = ref(null);
 const scrollComponent = ref(null);
 const pageChangeLoading = ref(false);
 const totalPageCount = ref(null);
 
-onMounted(() => {
-  getPostType();
-  getLocations();
-})
+const handleScroll = () => {
+  let element = scrollComponent.value;
+  if (element.scrollTop === element.scrollHeight - element.clientHeight) {
+    if (!pageChangeLoading.value) {
+      page.value += 1;
+      if (page.value <= totalPageCount.value) {
+        postHandler(page.value, true);
+      }
+    }
+  }
+};
 
 watch(scrollComponent, () => {
   if (scrollComponent.value) {
     scrollComponent.value.addEventListener("scroll", handleScroll);
   }
 })
-
-const handleScroll = () => {
-  let element = scrollComponent.value;
-
-  if (element.scrollTop === element.scrollHeight - element.clientHeight) {
-    if(!pageChangeLoading.value) {
-      page.value += 1;
-      if(page.value <= totalPageCount.value) {
-        postHandler(page.value, true);
-      }
-    }
-  }
-};
 
 const getLocations = async () => {
   postLoading.value = true;
@@ -57,6 +51,11 @@ const getPostType = async () => {
   postTypes.value = res.data.data;
   loading.value = false;
 }
+
+onMounted(() => {
+  getPostType();
+  getLocations();
+})
 
 let debounceTimer;
 const searchLocation = () => {
@@ -93,7 +92,7 @@ watch(postParams, () => {
   posts.value = [];
 })
 
-const postHandler = async (page, isPageChange = false) => {
+const postHandler = async (pagePaginate, isPageChange = false) => {
   if (!isPageChange) {
     postLoading.value = true;
   } else {
@@ -101,13 +100,18 @@ const postHandler = async (page, isPageChange = false) => {
   }
   locationSuggests.value = [];
 
-  const res = await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${page}`);
-  if(res.data.data) {
-    posts.value = [...posts.value, ...res.data.data];
+  const res = await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${pagePaginate}`);
+  if (res.data.data) {
+    if (pagePaginate == 1) {
+      page.value = 1;
+      posts.value = res.data.data;
+    } else {
+      posts.value = [...posts.value, ...res.data.data];
+    }
     totalPageCount.value = res.data.pagination.total_page_count;
   } else {
     pageChangeLoading.value = false;
-    if(page === 1) {
+    if (pagePaginate === 1) {
       posts.value = [];
     }
   }
@@ -123,6 +127,24 @@ const changeViewHandler = (view) => {
   defaultView.value = view;
 }
 
+const searchUserCurrentLocation = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+      console.log(position.coords.latitude, position.coords.longitude);
+    });
+  }
+}
+
+const showGetDirectionWithMap = (location, newLat, newLng) => {
+  const encodedPlace = encodeURIComponent(`MAB ${location}`);
+  const zoom = 20;
+  // const url = `https://www.google.com/maps/search/${encodedPlace}/@${newLat},${newLng},${zoom}z`;
+  const url = `https://www.google.com/maps/search/${encodedPlace}/@${newLat},${newLng},${zoom}z/${newLat},${newLng},17z`;
+
+  window.open(url, '_blank');
+};
+
+
 </script>
 
 <template>
@@ -131,6 +153,9 @@ const changeViewHandler = (view) => {
       <div class="mt-5 mb-5">
         <!-- start search box -->
         <div class="d-flex justify-content-center align-items-center pb-2 gap-3 ">
+          <div>
+            Type Location
+          </div>
           <div class="d-flex position-relative w-50">
             <!-- serach icon -->
             <div class="search-icon">
@@ -178,6 +203,27 @@ const changeViewHandler = (view) => {
           <div>
             <button class="btn-white-secondary" @click="postHandler(1)">Search</button>
           </div>
+        </div>
+
+        <div v-if="!loading" class="d-flex justify-content-center align-items-center">
+          <div class="me-2 bottom-line-currenct-location cursor" @click="searchUserCurrentLocation">
+            Or use my current location
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <g clip-path="url(#clip0_7154_5656)">
+              <path
+                d="M7.97278 16.005L7.50806 15.6067C6.86741 15.0702 1.27344 10.2391 1.27344 6.7052C1.27344 3.00527 4.27284 0.00585938 7.97278 0.00585938C11.6727 0.00585938 14.6721 3.00527 14.6721 6.7052C14.6721 10.2391 9.07816 15.0703 8.44016 15.6093L7.97278 16.005ZM7.97278 1.45445C5.07425 1.45773 2.72534 3.80664 2.72206 6.70517C2.72206 8.92524 6.16369 12.4717 7.97278 14.095C9.78191 12.4711 13.2235 8.92255 13.2235 6.70517C13.2202 3.80664 10.8713 1.45777 7.97278 1.45445Z"
+                fill="#681C32" />
+              <path
+                d="M7.97197 9.36191C6.50534 9.36191 5.31641 8.17297 5.31641 6.70634C5.31641 5.23972 6.50534 4.05078 7.97197 4.05078C9.43859 4.05078 10.6275 5.23972 10.6275 6.70634C10.6275 8.17297 9.43862 9.36191 7.97197 9.36191ZM7.97197 5.37853C7.23866 5.37853 6.64419 5.973 6.64419 6.70631C6.64419 7.43963 7.23866 8.03409 7.97197 8.03409C8.70528 8.03409 9.29975 7.43963 9.29975 6.70631C9.29975 5.973 8.70531 5.37853 7.97197 5.37853Z"
+                fill="#681C32" />
+            </g>
+            <defs>
+              <clipPath id="clip0_7154_5656">
+                <rect width="16" height="16" fill="white" />
+              </clipPath>
+            </defs>
+          </svg>
         </div>
         <!-- end search box -->
 
@@ -327,7 +373,7 @@ const changeViewHandler = (view) => {
                     <td>{{ post.meta_data.address }}</td>
                     <td>{{ post.id }}</td>
                     <td>
-                      <button class="btn-post-direction">
+                      <button class="btn-post-direction" @click="showGetDirectionWithMap(post.title, post.meta_data.latitude, post.meta_data.longitude)">
                         <div class="d-flex align-items-center gap-1">
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
                             <mask id="mask0_3653_21831" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0"
@@ -585,12 +631,17 @@ const changeViewHandler = (view) => {
 }
 
 .btn-white-secondary {
-    background-color: #ffffff;
-    color: #691C32;
-    border: 1px solid #691C32;
-    border-radius: 100px;
-    padding: 12px 24px;
-    transition: background-color 0.5s ease;
-    font-weight: 600;
+  background-color: #ffffff;
+  color: #691C32;
+  border: 1px solid #691C32;
+  border-radius: 100px;
+  padding: 12px 24px;
+  transition: background-color 0.5s ease;
+  font-weight: 600;
+}
+
+.bottom-line-currenct-location {
+  color: #691C32;
+  border-bottom: 1px solid #691C32;
 }
 </style>
