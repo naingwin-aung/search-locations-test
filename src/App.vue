@@ -20,6 +20,47 @@ const scrollComponent = ref(null);
 const pageChangeLoading = ref(false);
 const totalPageCount = ref(null);
 
+const map = ref(null);
+const infowindow = ref(null);
+
+const initializeMap = () => {
+  map.value = new google.maps.Map(document.getElementById('dining-map'), {
+    zoom: 12,
+    center: new google.maps.LatLng(posts.value[0].meta_data.latitude, posts.value[0].meta_data.longitude),
+    mapTypeId: 'roadmap',
+  });
+
+  infowindow.value = new google.maps.InfoWindow();
+
+  let iconBase = `https://mabbank.mabsayyaungchelrun.com/wp-content/uploads/2023/11/MAB-Logo-Pattern.png`;
+  let icons = {
+    info: {
+      icon: iconBase,
+    },
+  };
+
+  posts.value.forEach((post) => {
+    var marker = new google.maps.Marker({
+      position: new google.maps.LatLng(post.meta_data.latitude, post.meta_data.longitude),
+      animation: google.maps.Animation.DROP,
+      icon: icons.info.icon,
+      map: map.value,
+      title: post.title,
+    });
+
+    var contentString = `<div id="branch-${post.id}" class="branch-info">
+                                <h2>${post.title}</h2>
+                                <p class="address">${post.meta_data.address}</p>
+                                <p class="phone"> Tel: ${post.meta_data.phone}</p>
+                              </div>`;
+
+    marker.addListener('click', () => {
+      infowindow.value.setContent(contentString);
+      infowindow.value.open(map.value, marker);
+    });
+  })
+}
+
 const handleScroll = () => {
   let element = scrollComponent.value;
   if (element.scrollTop === element.scrollHeight - element.clientHeight) {
@@ -55,6 +96,7 @@ const getPostType = async () => {
 onMounted(() => {
   getPostType();
   getLocations();
+  // initializeMap();
 })
 
 let debounceTimer;
@@ -109,6 +151,8 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
       posts.value = [...posts.value, ...res.data.data];
     }
     totalPageCount.value = res.data.pagination.total_page_count;
+
+    initializeMap();
   } else {
     pageChangeLoading.value = false;
     if (pagePaginate === 1) {
@@ -137,14 +181,11 @@ const searchUserCurrentLocation = () => {
 
 const showGetDirectionWithMap = (location, newLat, newLng) => {
   const encodedPlace = encodeURIComponent(`MAB ${location}`);
-  const zoom = 20;
-  // const url = `https://www.google.com/maps/search/${encodedPlace}/@${newLat},${newLng},${zoom}z`;
+  const zoom = 18;
   const url = `https://www.google.com/maps/search/${encodedPlace}/@${newLat},${newLng},${zoom}z/${newLat},${newLng},17z`;
 
   window.open(url, '_blank');
 };
-
-
 </script>
 
 <template>
@@ -324,6 +365,7 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
           </svg>
         </div>
 
+        <!-- start post -->
         <div v-else-if="posts && posts.length > 0" class="row mt-4">
           <div class="col-12">
             <div class="d-flex justify-content-around align-items-center post-tabs">
@@ -373,7 +415,8 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                     <td>{{ post.meta_data.address }}</td>
                     <td>{{ post.id }}</td>
                     <td>
-                      <button class="btn-post-direction" @click="showGetDirectionWithMap(post.title, post.meta_data.latitude, post.meta_data.longitude)">
+                      <button class="btn-post-direction"
+                        @click="showGetDirectionWithMap(post.title, post.meta_data.latitude, post.meta_data.longitude)">
                         <div class="d-flex align-items-center gap-1">
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
                             <mask id="mask0_3653_21831" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0"
@@ -474,16 +517,15 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                 </svg>
               </div>
               <!-- end list view -->
-
-              <div v-if="defaultView == 'mapView'">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3819.626138829417!2d96.17436547513314!3d16.795265919592875!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30c1ecea5778cd6d%3A0x2e4b469ab033982c!2sDigital%20Dots!5e0!3m2!1sen!2smm!4v1699606201489!5m2!1sen!2smm"
-                  width="100%" height="100%" style="border:0;min-height: 570px;" allowfullscreen="" loading="lazy"
-                  referrerpolicy="no-referrer-when-downgrade"></iframe>
-              </div>
+              <!-- <div v-if="defaultView == 'mapView'">
+                <div id="dining-map" style="height: 400px; width: 100%;"></div>
+              </div> -->
             </div>
           </div>
         </div>
+        <!-- end post -->
+        
+        <div id="dining-map" style="height: 400px; width: 100%;"></div>
       </div>
     </div>
   </div>

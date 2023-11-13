@@ -16,4 +16,7 @@ return {
     totalPageCount,
     changeViewHandler,
     scrollComponent,
+    initializeMap,
+    showGetDirectionWithMap,
+    searchUserCurrentLocation
   }
