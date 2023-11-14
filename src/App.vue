@@ -7,6 +7,11 @@ const postParams = reactive({
   'taxo_name': 'branch-location'
 });
 
+const mapCenter = reactive({
+  'latitude': null,
+  'longitude': null,
+});
+
 const lang = ref('en');
 const loading = ref(false);
 const postLoading = ref(false);
@@ -26,8 +31,8 @@ const infowindow = ref(null);
 
 const initializeMap = () => {
   map.value = new google.maps.Map(document.getElementById('dining-map'), {
-    zoom: 12,
-    center: new google.maps.LatLng(posts.value[0].meta_data.latitude, posts.value[0].meta_data.longitude),
+    zoom: 10,
+    center: new google.maps.LatLng(mapCenter.latitude, mapCenter.longitude),
     mapTypeId: 'roadmap',
   });
 
@@ -97,6 +102,7 @@ const getPostType = async () => {
 onMounted(() => {
   getPostType();
   getLocations();
+  postHandler(1);
 })
 
 let debounceTimer;
@@ -120,19 +126,17 @@ const clearHandler = () => {
 const getPostTypeAndTaxoName = async (postType, taxoName) => {
   postParams.post_type = postType;
   postParams.taxo_name = taxoName;
+  keyword.value = '';
+  locationSuggests.value = [];
+  posts.value = [];
   getLocations();
+  postHandler(1);
 }
 
 const replaceSearchKeyword = (location) => {
   keyword.value = location;
   locationSuggests.value = [];
 }
-
-watch(postParams, () => {
-  keyword.value = '';
-  locationSuggests.value = [];
-  posts.value = [];
-})
 
 const postHandler = async (pagePaginate, isPageChange = false) => {
   if (!isPageChange) {
@@ -143,6 +147,7 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
   locationSuggests.value = [];
 
   const res = await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${pagePaginate}`);
+
   if (res.data.data) {
     if (pagePaginate == 1) {
       page.value = 1;
@@ -151,6 +156,8 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
       posts.value = [...posts.value, ...res.data.data];
     }
     totalPageCount.value = res.data.pagination.total_page_count;
+    mapCenter.latitude = res.data.center_location.latitude;
+    mapCenter.longitude = res.data.center_location.longitude;
 
     initializeMap();
   } else {
