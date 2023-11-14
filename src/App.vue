@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, reactive, ref, watch } from "vue";
+import './assets/css/style.css';
 
 const postParams = reactive({
   'post_type': 'branch',
@@ -96,7 +97,6 @@ const getPostType = async () => {
 onMounted(() => {
   getPostType();
   getLocations();
-  // initializeMap();
 })
 
 let debounceTimer;
@@ -286,7 +286,8 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
         </div>
         <!-- end show me banner -->
 
-        <div v-if="postLoading" class="mt-5">
+        <!-- start spinner loading -->
+        <div v-if="postLoading && defaultView == 'listView'" class="mt-5">
           <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
             style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="60px"
             height="60px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
@@ -364,12 +365,13 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
             </g>
           </svg>
         </div>
+        <!-- end spinner loading -->
 
         <!-- start post -->
-        <div v-else-if="posts && posts.length > 0" class="row mt-4">
+        <div v-show="posts && posts.length > 0" class="row mt-4">
           <div class="col-12">
             <div class="d-flex justify-content-around align-items-center post-tabs">
-              <h4 class="cursor flex-fill d-flex justify-content-center post-list-view"
+              <h5 class="cursor flex-fill d-flex justify-content-center post-list-view"
                 :class="[{ 'view-active': defaultView == 'listView' }]" @click="changeViewHandler('listView')">
                 <div class="d-flex align-items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 18" fill="none">
@@ -381,10 +383,10 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                     List View
                   </div>
                 </div>
-              </h4>
+              </h5>
               <div class="tabs-break">
               </div>
-              <h4 class="cursor flex-fill d-flex justify-content-center post-list-view"
+              <h5 class="cursor flex-fill d-flex justify-content-center post-list-view"
                 :class="[{ 'view-active': defaultView == 'mapView' }]" @click="changeViewHandler('mapView')">
                 <div class="d-flex align-items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="18" viewBox="0 0 20 18" fill="none">
@@ -396,11 +398,11 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                     Map View
                   </div>
                 </div>
-              </h4>
+              </h5>
             </div>
             <div class="post-data-table-wrapper" ref="scrollComponent">
               <!-- start list view -->
-              <table class="table table-striped border-0 post-data-table" v-if="defaultView == 'listView'">
+              <table class="table table-striped border-0 post-data-table" v-show="defaultView == 'listView'">
                 <thead>
                   <tr class="py-3">
                     <th scope="col">Location Name</th>
@@ -413,7 +415,7 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                   <tr v-for="post in posts" :key="post" class="post-data">
                     <td>{{ post.title }}</td>
                     <td>{{ post.meta_data.address }}</td>
-                    <td>{{ post.id }}</td>
+                    <td>{{ post.meta_data?.phone }}</td>
                     <td>
                       <button class="btn-post-direction"
                         @click="showGetDirectionWithMap(post.title, post.meta_data.latitude, post.meta_data.longitude)">
@@ -517,173 +519,15 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                 </svg>
               </div>
               <!-- end list view -->
-              <!-- <div v-if="defaultView == 'mapView'">
-                <div id="dining-map" style="height: 400px; width: 100%;"></div>
-              </div> -->
+              <div v-show="defaultView == 'mapView'">
+                <div id="dining-map" class="posts-map"></div>
+              </div>
             </div>
           </div>
         </div>
         <!-- end post -->
-        
-        <div id="dining-map" style="height: 400px; width: 100%;"></div>
+
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.cursor {
-  cursor: pointer;
-}
-
-.form-input {
-  display: block;
-  width: 100%;
-  height: 60px;
-  border: 1px solid darkgray;
-  font-size: 21px;
-  outline: none;
-  border-left: none;
-  border-right: none;
-}
-
-.search-icon {
-  width: 75px;
-  border: 1px solid darkgray;
-  border-top-left-radius: 60%;
-  border-bottom-left-radius: 60%;
-  border-right: none;
-  padding-top: 15px;
-  text-align: center;
-}
-
-.close-icon {
-  width: 75px;
-  border: 1px solid darkgray;
-  border-top-right-radius: 60%;
-  border-bottom-right-radius: 60%;
-  border-left: none;
-  padding-top: 15px;
-  text-align: center;
-}
-
-.location-wrapper {
-  position: absolute;
-  width: 100%;
-  top: 70px;
-  left: 0;
-  right: 0;
-}
-
-.location-box-wrapper {
-  border: 1px solid darkgray;
-  border-radius: 20px;
-  background-color: white;
-}
-
-.location-box {
-  padding: 12px;
-}
-
-.location-box:not(:last-child) {
-  border-bottom: 1px solid darkgray;
-}
-
-.card-box {
-  border: 1px solid darkgray;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  padding: 8px 30px;
-}
-
-.post-type-radio {
-  accent-color: #681C32;
-}
-
-.margin-start {
-  margin-left: 6px;
-}
-
-.post-tabs {
-  border: 1px solid darkgray;
-  border-bottom: none;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-}
-
-.post-data-table-wrapper {
-  border: 1px solid darkgray;
-  border-top: none;
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  max-height: 570px;
-  overflow-y: scroll;
-}
-
-.post-table-wrapper::-webkit-scrollbar {
-  display: none;
-  /* Safari and Chrome */
-}
-
-.post-table-wrapper th {
-  padding: 13px;
-  vertical-align: middle;
-}
-
-.btn-post-direction {
-  padding: 8px;
-  outline: none;
-  border: 1px solid darkgray;
-  border-radius: 16px;
-  font-size: 11px;
-  color: #681C32;
-}
-
-.post-data td {
-  padding: 13px;
-  vertical-align: middle;
-}
-
-.tabs-break {
-  height: 40px;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  border: 1px solid darkgray;
-  padding-bottom: 10px;
-}
-
-.post-list-view,
-.post-map-view {
-  height: 58px;
-  margin-top: 12px;
-}
-
-.view-active {
-  color: #681C32;
-  border-bottom: 2px solid #681C32;
-}
-
-.post-view-table {
-  border-top: none !important;
-  border-bottom: none !important;
-}
-
-.post-data-table>:not(caption)>*>* {
-  border-bottom-width: 0px !important
-}
-
-.btn-white-secondary {
-  background-color: #ffffff;
-  color: #691C32;
-  border: 1px solid #691C32;
-  border-radius: 100px;
-  padding: 12px 24px;
-  transition: background-color 0.5s ease;
-  font-weight: 600;
-}
-
-.bottom-line-currenct-location {
-  color: #691C32;
-  border-bottom: 1px solid #691C32;
-}
-</style>
