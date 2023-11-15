@@ -12,6 +12,7 @@ const mapCenter = reactive({
   'longitude': null,
 });
 
+const dataEmpty = ref('');
 const lang = ref('en');
 const loading = ref(false);
 const postLoading = ref(false);
@@ -25,6 +26,10 @@ const page = ref(null);
 const scrollComponent = ref(null);
 const pageChangeLoading = ref(false);
 const totalPageCount = ref(null);
+const userLocation = reactive({
+  'latitude' : null,
+  'longitude' : null,
+});
 
 const map = ref(null);
 const infowindow = ref(null);
@@ -69,9 +74,15 @@ const initializeMap = () => {
 
 const handleScroll = () => {
   let element = scrollComponent.value;
-  if (element.scrollTop === element.scrollHeight - element.clientHeight) {
+  console.log(element.scrollTop, element.scrollHeight, element.clientHeight);
+
+  // Calculate a small margin of error for the scroll comparison
+  const marginOfError = 1;
+
+  if (element.scrollTop >= element.scrollHeight - element.clientHeight - marginOfError) {
     if (!pageChangeLoading.value) {
       page.value += 1;
+      console.log(page.value, totalPageCount.value);
       if (page.value <= totalPageCount.value) {
         postHandler(page.value, true);
       }
@@ -146,7 +157,10 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
   }
   locationSuggests.value = [];
 
-  const res = await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${pagePaginate}`);
+  const res = keyword.value === 'Current Location' 
+  ? await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search-by-location?lang=${lang.value}&post_type=${postParams.post_type}&lat=${userLocation.latitude}&long=${userLocation.longitude}&paged=${pagePaginate}`)
+
+  : await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${pagePaginate}`);
 
   if (res.data.data) {
     if (pagePaginate == 1) {
@@ -155,6 +169,7 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
     } else {
       posts.value = [...posts.value, ...res.data.data];
     }
+
     totalPageCount.value = res.data.pagination.total_page_count;
     mapCenter.latitude = res.data.center_location.latitude;
     mapCenter.longitude = res.data.center_location.longitude;
@@ -165,6 +180,8 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
     if (pagePaginate === 1) {
       posts.value = [];
     }
+    dataEmpty.value = ucfirst(`${postParams.post_type} not found.`);
+    console.log(dataEmpty.value);
   }
 
   if (!isPageChange) {
@@ -178,12 +195,11 @@ const changeViewHandler = (view) => {
   defaultView.value = view;
 }
 
-const searchUserCurrentLocation = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((position) => {
-      console.log(position.coords.latitude, position.coords.longitude);
-    });
+const ucfirst = (str) => {
+  if (typeof str !== 'string' || str.length === 0) {
+    return str;
   }
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 const showGetDirectionWithMap = (location, newLat, newLng) => {
@@ -193,6 +209,17 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
 
   window.open(url, '_blank');
 };
+
+const searchUserCurrentLocation = async () => {
+  if (navigator.geolocation) {
+    await navigator.geolocation.getCurrentPosition((position) => {
+      keyword.value = 'Current Location';
+      userLocation.latitude = position.coords.latitude;
+      userLocation.longitude = position.coords.longitude;
+      postHandler(1);
+    });
+  }
+}
 </script>
 
 <template>
@@ -375,7 +402,7 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
         <!-- end spinner loading -->
 
         <!-- start post -->
-        <div v-show="posts && posts.length > 0" class="row mt-4">
+        <div v-show="!postLoading && posts && posts.length > 0" class="row mt-4">
           <div class="col-12">
             <div class="d-flex justify-content-around align-items-center post-tabs">
               <h5 class="cursor flex-fill d-flex justify-content-center post-list-view"
@@ -414,7 +441,10 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                   <tr class="py-3">
                     <th scope="col">Location Name</th>
                     <th scope="col">Address</th>
-                    <th scope="col">Phone</th>
+                    <th scope="col" v-if="postParams.post_type !== 'atm'">
+                      Phone
+                    </th>
+                    <th scope="col" v-if="postParams.post_type === 'atm'">Services</th>
                     <th scope="col"></th>
                   </tr>
                 </thead>
@@ -422,10 +452,18 @@ const showGetDirectionWithMap = (location, newLat, newLng) => {
                   <tr v-for="post in posts" :key="post" class="post-data">
                     <td>{{ post.title }}</td>
                     <td>{{ post.meta_data.address }}</td>
-                    <td>{{ post.meta_data?.phone }}</td>
+                    <td v-if="postParams.post_type !== 'atm'">{{ post.meta_data?.phone }}</td>
+                    <td v-if="postParams.post_type === 'atm'" class="post-services">
+                      <span v-if="post.meta_data.available && post.meta_data.available !== '0'" class="text-success">
+                        <i class="fa-solid fa-check"></i> Available
+                      </span>
+                      <span v-else class="text-danger">
+                        <i class="fa-solid fa-xmark"></i> Unavailable
+                      </span>
+                    </td>
                     <td>
                       <button class="btn-post-direction"
-                        @click="showGetDirectionWithMap(post.title, post.meta_data.latitude, post.meta_data.longitude)">
+                        @click="showGetDirectionWithMap(post.title, 'atm_' + post.meta_data.latitude, post.meta_data.longitude)">
                         <div class="d-flex align-items-center gap-1">
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
                             <mask id="mask0_3653_21831" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0"

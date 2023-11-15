@@ -110,6 +110,10 @@
     vertical-align: middle;
   }
 
+  .post-data td.post-services {
+    width: 130px;
+  }
+
   .post-data td:last-child {
     width: 130px;
   }
