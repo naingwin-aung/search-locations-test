@@ -165,3 +165,28 @@
     height: 540px;
     width: 100%;
   }
+
+  .branch-services {
+    font-size: 14px;
+    color: #691C32;
+  }
+
+  .branch-service-see  {
+    border-bottom: 1px solid #691C32;
+  }
+
+  .service-modal-header {
+    padding: 10px 20px;
+  }
+
+  .modal-body-start-padding {
+    padding-left: 38px;
+  }
+
+  .modal-border-radius {
+    border-radius: 30px;
+  }
+
+  .modal-title-width {
+    width: 90%;
+  }

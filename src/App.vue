@@ -27,9 +27,11 @@ const scrollComponent = ref(null);
 const pageChangeLoading = ref(false);
 const totalPageCount = ref(null);
 const userLocation = reactive({
-  'latitude' : null,
-  'longitude' : null,
+  'latitude': null,
+  'longitude': null,
 });
+const services = ref([]);
+const postTitle = ref('');
 
 const map = ref(null);
 const infowindow = ref(null);
@@ -157,10 +159,10 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
   }
   locationSuggests.value = [];
 
-  const res = keyword.value === 'Current Location' 
-  ? await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search-by-location?lang=${lang.value}&post_type=${postParams.post_type}&lat=${userLocation.latitude}&long=${userLocation.longitude}&paged=${pagePaginate}`)
+  const res = keyword.value === 'Current Location'
+    ? await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search-by-location?lang=${lang.value}&post_type=${postParams.post_type}&lat=${userLocation.latitude}&long=${userLocation.longitude}&paged=${pagePaginate}`)
 
-  : await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${pagePaginate}`);
+    : await axios.post(`https://mab.mabsayyaungchelrun.com/wp-json/dd_mab/v1/search?lang=${lang.value}&post_type=${postParams.post_type}&taxo_name=${postParams.taxo_name}&search_key=${keyword.value}&paged=${pagePaginate}`);
 
   if (res.data.data) {
     if (pagePaginate == 1) {
@@ -219,6 +221,11 @@ const searchUserCurrentLocation = async () => {
       postHandler(1);
     });
   }
+}
+
+const showSeeServices = (title, branchService) => {
+  services.value = branchService;
+  postTitle.value = title;
 }
 </script>
 
@@ -444,7 +451,8 @@ const searchUserCurrentLocation = async () => {
                     <th scope="col" v-if="postParams.post_type !== 'atm'">
                       Phone
                     </th>
-                    <th scope="col" v-if="postParams.post_type === 'atm'">Services</th>
+                    <th scope="col" v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'">Services
+                    </th>
                     <th scope="col"></th>
                   </tr>
                 </thead>
@@ -453,12 +461,26 @@ const searchUserCurrentLocation = async () => {
                     <td>{{ post.title }}</td>
                     <td>{{ post.meta_data.address }}</td>
                     <td v-if="postParams.post_type !== 'atm'">{{ post.meta_data?.phone }}</td>
-                    <td v-if="postParams.post_type === 'atm'" class="post-services">
-                      <span v-if="post.meta_data.available && post.meta_data.available !== '0'" class="text-success">
-                        <i class="fa-solid fa-check"></i> Available
+
+                    <td v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'" class="post-services">
+
+                      <span v-if="postParams.post_type === 'atm'">
+                        <span v-if="post.meta_data.available && post.meta_data.available !== '0'" class="text-success">
+                          <i class="fa-solid fa-check"></i> Available
+                        </span>
+                        <span v-else class="text-danger">
+                          <i class="fa-solid fa-xmark"></i> Unavailable
+                        </span>
                       </span>
-                      <span v-else class="text-danger">
-                        <i class="fa-solid fa-xmark"></i> Unavailable
+
+                      <span v-if="postParams.post_type === 'branch' && post.meta_data.available_services"
+                        class="branch-services cursor d-flex align-items-center gap-1" data-bs-toggle="modal"
+                        data-bs-target="#exampleModal"
+                        @click="showSeeServices(post.title, post.meta_data.available_services)">
+                        <i class="fa-regular fa-eye"></i>
+                        <span class="branch-service-see">
+                          See services
+                        </span>
                       </span>
                     </td>
                     <td>
@@ -572,6 +594,50 @@ const searchUserCurrentLocation = async () => {
         </div>
         <!-- end post -->
 
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-border-radius">
+              <div class="service-modal-header">
+                <div>
+                  <div class="d-flex justify-content-end">
+                    <svg class="cursor mt-2" data-bs-dismiss="modal" aria-label="Close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                      fill="none">
+                      <mask id="mask0_6977_3087" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="24"
+                        height="24">
+                        <rect width="24" height="24" fill="#D9D9D9" />
+                      </mask>
+                      <g mask="url(#mask0_6977_3087)">
+                        <path
+                          d="M6.4 19L5 17.6L10.6 12L5 6.4L6.4 5L12 10.6L17.6 5L19 6.4L13.4 12L19 17.6L17.6 19L12 13.4L6.4 19Z"
+                          fill="#62656A" />
+                      </g>
+                    </svg>
+                  </div>
+                  <h5 class="ms-4 modal-title-width">
+                    Available Services at {{ postTitle }}
+                    <div class="border-bottom mt-3">
+                    </div>
+                  </h5>
+                </div>
+              </div>
+              <div class="modal-body modal-body-start-padding mb-3 pt-0">
+                <div v-for="service in services" :key="service.service_title" class="mb-2 ms-2">
+                  <span :class="[{ 'text-muted': !service.is_available }]">
+                    <span class="me-2 text-success" v-if="service.is_available">
+                      <i class="fa-solid fa-check"></i> 
+                    </span>
+                    <span v-else class="me-2">
+                      <i class="fa-solid fa-xmark"></i>
+                    </span>
+                    {{ service.service_title }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
