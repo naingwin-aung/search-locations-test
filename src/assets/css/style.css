@@ -190,3 +190,17 @@
   .modal-title-width {
     width: 90%;
   }
+
+  .search-selected {
+    background-color: #f5f5f5;
+  }
+
+  .search-selected:first-child {
+    border-top-right-radius: 20px;
+    border-top-left-radius: 20px;
+  }
+
+  .search-selected:last-child {
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+  }

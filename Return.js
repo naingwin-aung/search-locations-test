@@ -22,4 +22,7 @@ return {
   showGetDirectionWithMap,
   searchUserCurrentLocation,
   showSeeServices,
+  selectedItem,
+  handleKeyDown,
+  handleKeyUp
 }

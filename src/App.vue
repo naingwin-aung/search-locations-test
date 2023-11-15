@@ -12,6 +12,7 @@ const mapCenter = reactive({
   'longitude': null,
 });
 
+const selectedItem = ref(null);
 const dataEmpty = ref('');
 const lang = ref('en');
 const loading = ref(false);
@@ -149,6 +150,33 @@ const getPostTypeAndTaxoName = async (postType, taxoName) => {
 const replaceSearchKeyword = (location) => {
   keyword.value = location;
   locationSuggests.value = [];
+  selectedItem.value = null;
+}
+
+const handleKeyDown = () => {
+  if (selectedItem.value === null || selectedItem.value === locationSuggests.value.length - 1) {
+    selectedItem.value = 0;
+  } else {
+    selectedItem.value++;
+  }
+
+  changeKeyword();
+}
+
+const handleKeyUp = () => {
+  if (selectedItem.value === null || selectedItem.value === 0) {
+    selectedItem.value = locationSuggests.value.length - 1;
+  } else {
+    selectedItem.value--;
+  }
+
+  changeKeyword();
+}
+
+const changeKeyword = () => {
+  if (locationSuggests.value[selectedItem.value]) {
+    keyword.value = locationSuggests.value[selectedItem.value];
+  }
 }
 
 const postHandler = async (pagePaginate, isPageChange = false) => {
@@ -253,7 +281,8 @@ const showSeeServices = (title, branchService) => {
               </svg>
             </div>
 
-            <input type="text" class="form-input" v-model="keyword" @input="searchLocation">
+            <input type="text" class="form-input" v-model="keyword" @input="searchLocation" @keyup.down="handleKeyDown"
+              @keyup.up="handleKeyUp" @keyup.enter="postHandler(1)">
 
             <!-- close icon -->
             <div class="close-icon">
@@ -273,8 +302,9 @@ const showSeeServices = (title, branchService) => {
 
             <div v-if="locationSuggests && locationSuggests.length > 0" class="location-wrapper">
               <div class="location-box-wrapper">
-                <div v-for="location in locationSuggests" :key="location" class="location-box cursor"
-                  @click="replaceSearchKeyword(location)">
+                <div v-for="(location, index) in locationSuggests" :key="location" class="location-box cursor"
+                  @click="replaceSearchKeyword(location)" @mouseenter="selectedItem = index"
+                  :class="{ 'search-selected': selectedItem === index }">
                   {{ location }}
                 </div>
               </div>
@@ -601,8 +631,8 @@ const showSeeServices = (title, branchService) => {
               <div class="service-modal-header">
                 <div>
                   <div class="d-flex justify-content-end">
-                    <svg class="cursor mt-2" data-bs-dismiss="modal" aria-label="Close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                      fill="none">
+                    <svg class="cursor mt-2" data-bs-dismiss="modal" aria-label="Close" xmlns="http://www.w3.org/2000/svg"
+                      width="24" height="24" viewBox="0 0 24 24" fill="none">
                       <mask id="mask0_6977_3087" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="24"
                         height="24">
                         <rect width="24" height="24" fill="#D9D9D9" />
@@ -625,7 +655,7 @@ const showSeeServices = (title, branchService) => {
                 <div v-for="service in services" :key="service.service_title" class="mb-2 ms-2">
                   <span :class="[{ 'text-muted': !service.is_available }]">
                     <span class="me-2 text-success" v-if="service.is_available">
-                      <i class="fa-solid fa-check"></i> 
+                      <i class="fa-solid fa-check"></i>
                     </span>
                     <span v-else class="me-2">
                       <i class="fa-solid fa-xmark"></i>
