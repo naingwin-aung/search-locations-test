@@ -1,3 +1,13 @@
+.btn-white-secondary {
+  background-color: #ffffff;
+  color: #691C32;
+  border: 1px solid #691C32;
+  border-radius: 100px;
+  padding: 12px 24px;
+  transition: background-color 0.5s ease;
+  font-weight: 600;
+}
+
 .cursor {
     cursor: pointer;
   }
@@ -144,16 +154,6 @@
   
   .post-data-table>:not(caption)>*>* {
     border-bottom-width: 0px !important
-  }
-  
-  .btn-white-secondary {
-    background-color: #ffffff;
-    color: #691C32;
-    border: 1px solid #691C32;
-    border-radius: 100px;
-    padding: 12px 24px;
-    transition: background-color 0.5s ease;
-    font-weight: 600;
   }
   
   .bottom-line-currenct-location {

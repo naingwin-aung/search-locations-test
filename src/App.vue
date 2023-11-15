@@ -123,7 +123,7 @@ const searchLocation = () => {
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     if (keyword.value) {
-      locationSuggests.value = resLocations.value.filter(location => location.includes(keyword.value))
+      locationSuggests.value = resLocations.value.filter(location => location.toLowerCase().includes(keyword.value.toLowerCase()))
         .slice(0, 5);
     } else {
       locationSuggests.value = [];
@@ -183,7 +183,6 @@ const postHandler = async (pagePaginate, isPageChange = false) => {
       posts.value = [];
     }
     dataEmpty.value = ucfirst(`${postParams.post_type} not found.`);
-    console.log(dataEmpty.value);
   }
 
   if (!isPageChange) {
@@ -475,7 +474,7 @@ const showSeeServices = (title, branchService) => {
 
                       <span v-if="postParams.post_type === 'branch' && post.meta_data.available_services"
                         class="branch-services cursor d-flex align-items-center gap-1" data-bs-toggle="modal"
-                        data-bs-target="#exampleModal"
+                        data-bs-target="#serviceModal"
                         @click="showSeeServices(post.title, post.meta_data.available_services)">
                         <i class="fa-regular fa-eye"></i>
                         <span class="branch-service-see">
@@ -596,7 +595,7 @@ const showSeeServices = (title, branchService) => {
 
 
         <!-- Modal -->
-        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal fade" id="serviceModal" tabindex="-1" aria-labelledby="serviceModalLabel" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content modal-border-radius">
               <div class="service-modal-header">
@@ -615,11 +614,11 @@ const showSeeServices = (title, branchService) => {
                       </g>
                     </svg>
                   </div>
-                  <h5 class="ms-4 modal-title-width">
+                  <h6 class="ms-4 modal-title-width">
                     Available Services at {{ postTitle }}
                     <div class="border-bottom mt-3">
                     </div>
-                  </h5>
+                  </h6>
                 </div>
               </div>
               <div class="modal-body modal-body-start-padding mb-3 pt-0">
