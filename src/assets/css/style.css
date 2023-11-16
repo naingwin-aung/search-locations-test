@@ -131,6 +131,16 @@
     font-size: 11px;
     color: #681C32;
   }
+
+  .btn-close-post-direction {
+    padding: 8px;
+    outline: none;
+    border: 1px solid darkgray;
+    border-radius: 16px;
+    font-size: 10.5px;
+    color: darkgray;
+    letter-spacing: 0.8px;
+  }
   
   .post-data td {
     padding: 13px;

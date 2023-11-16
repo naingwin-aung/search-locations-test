@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import './assets/css/style.css';
 
 const postParams = reactive({
@@ -77,7 +77,6 @@ const initializeMap = () => {
 
 const handleScroll = () => {
   let element = scrollComponent.value;
-  console.log(element.scrollTop, element.scrollHeight, element.clientHeight);
 
   // Calculate a small margin of error for the scroll comparison
   const marginOfError = 1;
@@ -85,7 +84,6 @@ const handleScroll = () => {
   if (element.scrollTop >= element.scrollHeight - element.clientHeight - marginOfError) {
     if (!pageChangeLoading.value) {
       page.value += 1;
-      console.log(page.value, totalPageCount.value);
       if (page.value <= totalPageCount.value) {
         postHandler(page.value, true);
       }
@@ -244,6 +242,7 @@ const searchUserCurrentLocation = async () => {
   if (navigator.geolocation) {
     await navigator.geolocation.getCurrentPosition((position) => {
       keyword.value = 'Current Location';
+      console.log(position.coords.latitude, position.coords.longitude);
       userLocation.latitude = position.coords.latitude;
       userLocation.longitude = position.coords.longitude;
       postHandler(1);
@@ -255,6 +254,10 @@ const showSeeServices = (title, branchService) => {
   services.value = branchService;
   postTitle.value = title;
 }
+
+const isClosedBranch = (post) => {
+  return postParams.post_type === 'branch' && !post.meta_data.is_open;
+};
 </script>
 
 <template>
@@ -487,11 +490,17 @@ const showSeeServices = (title, branchService) => {
                   </thead>
                   <tbody>
                     <tr v-for="post in posts" :key="post" class="post-data">
-                      <td>{{ post.title }}</td>
-                      <td>{{ post.meta_data.address }}</td>
-                      <td v-if="postParams.post_type !== 'atm'">{{ post.meta_data?.phone }}</td>
+                      <td :class="[{'text-muted' : isClosedBranch(post)}]">
+                        {{ post.title }}
+                      </td>
+                      <td :class="[{'text-muted' : isClosedBranch(post)}]">
+                        {{ post.meta_data.address }}
+                      </td>
+                      <td :class="[{'text-muted' : isClosedBranch(post)}]" v-if="postParams.post_type !== 'atm'">
+                        {{ post.meta_data?.phone }}
+                      </td>
   
-                      <td v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'" class="post-services">
+                      <td :class="[{'text-muted' : postParams.post_type === 'branch' && !post.meta_data.is_open}]" v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'" class="post-services">
   
                         <span v-if="postParams.post_type === 'atm'">
                           <span v-if="post.meta_data.available && post.meta_data.available !== '0'" class="text-success">
@@ -513,7 +522,7 @@ const showSeeServices = (title, branchService) => {
                         </span>
                       </td>
                       <td>
-                        <button class="btn-post-direction"
+                        <button v-if="postParams.post_type !== 'branch' || postParams.post_type === 'branch' && post.meta_data.is_open" class="btn-post-direction"
                           @click="showGetDirectionWithMap(post.title, 'atm_' + post.meta_data.latitude, post.meta_data.longitude)">
                           <div class="d-flex align-items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -530,6 +539,12 @@ const showSeeServices = (title, branchService) => {
                             <div>
                               Get Direction
                             </div>
+                          </div>
+                        </button>
+                        
+                        <button v-else-if="postParams.post_type === 'branch' && !post.meta_data.is_open" class="btn-close-post-direction">
+                          <div class="d-flex align-items-center gap-1">
+                              Closed Branch
                           </div>
                         </button>
                       </td>

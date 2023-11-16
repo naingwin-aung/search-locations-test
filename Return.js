@@ -24,5 +24,6 @@ return {
   showSeeServices,
   selectedItem,
   handleKeyDown,
-  handleKeyUp
+  handleKeyUp,
+  isClosedBranch
 }
