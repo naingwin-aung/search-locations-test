@@ -1,4 +1,4 @@
-.btn-white-secondary {
+.btn-location-search {
   background-color: #ffffff;
   color: #691C32;
   border: 1px solid #691C32;
@@ -6,6 +6,22 @@
   padding: 12px 24px;
   transition: background-color 0.5s ease;
   font-weight: 600;
+}
+
+@media screen and (max-width: 567px) {
+  .d-mobile-location {
+    flex-flow: wrap column; 
+    /* justify-content: start; */
+    align-items: start !important;
+  }
+
+  .btn-location-search {
+    width: 100%;
+  }
+
+  .mobile-search {
+    width: 100% !important;
+  }
 }
 
 .cursor {
@@ -122,10 +138,12 @@
 
   .post-data td.post-services {
     width: 130px;
+    text-wrap: nowrap;
   }
 
   .post-data td:last-child {
     width: 130px;
+    text-wrap: nowrap;
   }
   
   .tabs-break {

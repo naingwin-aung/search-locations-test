@@ -135,6 +135,7 @@ const searchLocation = () => {
 const clearHandler = () => {
   keyword.value = '';
   locationSuggests.value = [];
+  selectedItem.value = null;
 }
 
 const getPostTypeAndTaxoName = async (postType, taxoName) => {
@@ -261,11 +262,11 @@ const showSeeServices = (title, branchService) => {
     <div class="container">
       <div class="mt-5 mb-5">
         <!-- start search box -->
-        <div class="d-flex justify-content-center align-items-center pb-2 gap-3 ">
+        <div class="d-flex d-mobile-location justify-content-center align-items-center pb-2 gap-3 ">
           <div>
             Type Location
           </div>
-          <div class="d-flex position-relative w-50">
+          <div class="d-flex position-relative w-50 mobile-search">
             <!-- serach icon -->
             <div class="search-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -311,9 +312,7 @@ const showSeeServices = (title, branchService) => {
             </div>
           </div>
 
-          <div>
-            <button class="btn-white-secondary" @click="postHandler(1)">Search</button>
-          </div>
+            <button class="btn-location-search" @click="postHandler(1)">Search</button>
         </div>
 
         <div v-if="!loading" class="d-flex justify-content-center align-items-center">
@@ -357,7 +356,7 @@ const showSeeServices = (title, branchService) => {
         <!-- end show me banner -->
 
         <!-- start spinner loading -->
-        <div v-if="postLoading && defaultView == 'listView'" class="mt-5">
+        <div v-if="postLoading" class="mt-5">
           <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
             style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;" width="60px"
             height="60px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
@@ -472,70 +471,73 @@ const showSeeServices = (title, branchService) => {
             </div>
             <div class="post-data-table-wrapper" ref="scrollComponent">
               <!-- start list view -->
-              <table class="table table-striped border-0 post-data-table" v-show="defaultView == 'listView'">
-                <thead>
-                  <tr class="py-3">
-                    <th scope="col">Location Name</th>
-                    <th scope="col">Address</th>
-                    <th scope="col" v-if="postParams.post_type !== 'atm'">
-                      Phone
-                    </th>
-                    <th scope="col" v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'">Services
-                    </th>
-                    <th scope="col"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="post in posts" :key="post" class="post-data">
-                    <td>{{ post.title }}</td>
-                    <td>{{ post.meta_data.address }}</td>
-                    <td v-if="postParams.post_type !== 'atm'">{{ post.meta_data?.phone }}</td>
-
-                    <td v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'" class="post-services">
-
-                      <span v-if="postParams.post_type === 'atm'">
-                        <span v-if="post.meta_data.available && post.meta_data.available !== '0'" class="text-success">
-                          <i class="fa-solid fa-check"></i> Available
+              <div class="table-responsive">
+                <table class="table table-striped border-0 post-data-table" v-show="defaultView == 'listView'">
+                  <thead>
+                    <tr class="py-3">
+                      <th scope="col">Location Name</th>
+                      <th scope="col">Address</th>
+                      <th scope="col" v-if="postParams.post_type !== 'atm'">
+                        Phone
+                      </th>
+                      <th scope="col" v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'">Services
+                      </th>
+                      <th scope="col"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="post in posts" :key="post" class="post-data">
+                      <td>{{ post.title }}</td>
+                      <td>{{ post.meta_data.address }}</td>
+                      <td v-if="postParams.post_type !== 'atm'">{{ post.meta_data?.phone }}</td>
+  
+                      <td v-if="postParams.post_type === 'atm' || postParams.post_type === 'branch'" class="post-services">
+  
+                        <span v-if="postParams.post_type === 'atm'">
+                          <span v-if="post.meta_data.available && post.meta_data.available !== '0'" class="text-success">
+                            <i class="fa-solid fa-check"></i> Available
+                          </span>
+                          <span v-else class="text-danger">
+                            <i class="fa-solid fa-xmark"></i> Unavailable
+                          </span>
                         </span>
-                        <span v-else class="text-danger">
-                          <i class="fa-solid fa-xmark"></i> Unavailable
+  
+                        <span v-if="postParams.post_type === 'branch' && post.meta_data.available_services"
+                          class="branch-services cursor d-flex align-items-center gap-1" data-bs-toggle="modal"
+                          data-bs-target="#serviceModal"
+                          @click="showSeeServices(post.title, post.meta_data.available_services)">
+                          <i class="fa-regular fa-eye"></i>
+                          <span class="branch-service-see">
+                            See services
+                          </span>
                         </span>
-                      </span>
-
-                      <span v-if="postParams.post_type === 'branch' && post.meta_data.available_services"
-                        class="branch-services cursor d-flex align-items-center gap-1" data-bs-toggle="modal"
-                        data-bs-target="#serviceModal"
-                        @click="showSeeServices(post.title, post.meta_data.available_services)">
-                        <i class="fa-regular fa-eye"></i>
-                        <span class="branch-service-see">
-                          See services
-                        </span>
-                      </span>
-                    </td>
-                    <td>
-                      <button class="btn-post-direction"
-                        @click="showGetDirectionWithMap(post.title, 'atm_' + post.meta_data.latitude, post.meta_data.longitude)">
-                        <div class="d-flex align-items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
-                            <mask id="mask0_3653_21831" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0"
-                              width="10" height="10">
-                              <rect width="10" height="10" fill="#D9D9D9" />
-                            </mask>
-                            <g mask="url(#mask0_3653_21831)">
-                              <path
-                                d="M0.712891 10V2.94118H7.28642L5.18348 0.823529L6.00701 0L9.53642 3.52941L6.00701 7.05882L5.18348 6.22059L7.28642 4.11765H1.88936V10H0.712891Z"
-                                fill="#681C32" />
-                            </g>
-                          </svg>
-                          <div>
-                            Get Direction
+                      </td>
+                      <td>
+                        <button class="btn-post-direction"
+                          @click="showGetDirectionWithMap(post.title, 'atm_' + post.meta_data.latitude, post.meta_data.longitude)">
+                          <div class="d-flex align-items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                              <mask id="mask0_3653_21831" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0"
+                                width="10" height="10">
+                                <rect width="10" height="10" fill="#D9D9D9" />
+                              </mask>
+                              <g mask="url(#mask0_3653_21831)">
+                                <path
+                                  d="M0.712891 10V2.94118H7.28642L5.18348 0.823529L6.00701 0L9.53642 3.52941L6.00701 7.05882L5.18348 6.22059L7.28642 4.11765H1.88936V10H0.712891Z"
+                                  fill="#681C32" />
+                              </g>
+                            </svg>
+                            <div>
+                              Get Direction
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
               <div v-if="pageChangeLoading" class="d-flex justify-content-center">
                 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                   style="margin: auto; background: rgb(255, 255, 255); display: block; shape-rendering: auto;"
