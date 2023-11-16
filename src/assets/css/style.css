@@ -28,7 +28,7 @@
     cursor: pointer;
   }
   
-  .form-input {
+  .location-form-input {
     display: block;
     width: 100%;
     height: 60px;
@@ -37,6 +37,7 @@
     outline: none;
     border-left: none;
     border-right: none;
+    border-radius: 0px;
   }
   
   .search-icon {

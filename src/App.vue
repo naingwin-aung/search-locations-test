@@ -263,7 +263,7 @@ const showSeeServices = (title, branchService) => {
       <div class="mt-5 mb-5">
         <!-- start search box -->
         <div class="d-flex d-mobile-location justify-content-center align-items-center pb-2 gap-3 ">
-          <div>
+          <div class="fw-bold">
             Type Location
           </div>
           <div class="d-flex position-relative w-50 mobile-search">
@@ -282,7 +282,7 @@ const showSeeServices = (title, branchService) => {
               </svg>
             </div>
 
-            <input type="text" class="form-input" v-model="keyword" @input="searchLocation" @keyup.down="handleKeyDown"
+            <input type="text" class="location-form-input" v-model="keyword" @input="searchLocation" @keyup.down="handleKeyDown"
               @keyup.up="handleKeyUp" @keyup.enter="postHandler(1)">
 
             <!-- close icon -->
