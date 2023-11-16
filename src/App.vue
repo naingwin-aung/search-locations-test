@@ -523,7 +523,7 @@ const isClosedBranch = (post) => {
                       </td>
                       <td>
                         <button v-if="postParams.post_type !== 'branch' || postParams.post_type === 'branch' && post.meta_data.is_open" class="btn-post-direction"
-                          @click="showGetDirectionWithMap(post.title, 'atm_' + post.meta_data.latitude, post.meta_data.longitude)">
+                          @click="showGetDirectionWithMap(post.title, post.meta_data.latitude, post.meta_data.longitude)">
                           <div class="d-flex align-items-center gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10" fill="none">
                               <mask id="mask0_3653_21831" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0"
